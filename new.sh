@@ -59,23 +59,6 @@ if $GOLD_MODE; then
     fi
 
     log "Gold mode completed successfully for day: $INPUT"
-
-    # *** Begin Git Commit Section ***
-    # Stage the original .go file and both input files
-    git add "$INPUT_FILE" "$INPUT_INPUT_FILE" "$INPUT_SMALL_FILE"
-
-    # Format the day number to ensure it's two digits (e.g., '1' becomes '01')
-    DAY_NUM=$(printf "%02d" "$INPUT")
-
-    # Create the commit message
-    COMMIT_MSG="AUTO: day $DAY_NUM regular"
-
-    # Commit the changes with the formatted message
-    git commit -m "$COMMIT_MSG"
-
-    log "Committed changes with message: '$COMMIT_MSG'"
-    # *** End Git Commit Section ***
-
     exit 0
 fi
 

@@ -71,7 +71,6 @@ When you want to lock in a solution and create a gold version:
 This:
 - Creates `days/1/1_gold.go` (copy of your solution)
 - Adds `//go:build ignore` to `days/1/1.go`
-- Commits the changes with auto-generated message
 
 ## Features
 
