@@ -1,5 +1,3 @@
-//go:build ignore
-
 package day
 
 import (
@@ -24,10 +22,8 @@ func Solve(input *input.Input, log *slog.Logger) int {
 			continue
 		}
 		line := ParseLine(l.T)
-		lock.Turn(line.Dir, line.Steps)
-		if lock.State == 0 {
-			result++
-		}
+		timesAtZero := lock.Turn(line.Dir, line.Steps)
+		result += timesAtZero
 	}
 
 	return result
@@ -74,27 +70,34 @@ func (d Direction) String() string {
 	}
 }
 
-func (l *Lock) Turn(dir Direction, steps int) {
+func (l *Lock) Turn(dir Direction, steps int) int {
 	currState := l.State
+	timesAtZero := 0
 	switch dir {
 	case LEFT:
 		for range steps {
-			if currState == 0 {
+			currState--
+			if currState < 0 {
 				currState = 99
-			} else {
-				currState--
+			}
+			if currState == 0 {
+				timesAtZero++
 			}
 		}
 	case RIGHT:
 		for range steps {
-			if currState == 99 {
+			currState++
+			if currState > 99 {
 				currState = 0
-			} else {
-				currState++
+			}
+			if currState == 0 {
+				timesAtZero++
 			}
 		}
 	}
 
 	l.State = currState
-	slog.Debug("Turned", "direction", dir, "steps", steps, "newState", l.State)
+	slog.Debug("Turned", "direction", dir, "steps", steps, "newState", l.State, "timesAtZero", timesAtZero)
+
+	return timesAtZero
 }
