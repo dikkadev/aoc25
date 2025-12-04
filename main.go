@@ -4,16 +4,14 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"os/signal"
 	"runtime/pprof"
+	"syscall"
 
 	_ "net/http/pprof"
 
 	"github.com/dikkadev/aoc25/days"
-	_ "github.com/dikkadev/aoc25/days/3"
-	_ "github.com/dikkadev/aoc25/days/2"
-	_ "github.com/dikkadev/aoc25/days/3"
 	_ "github.com/dikkadev/aoc25/days/1"
-	_ "github.com/dikkadev/aoc25/days/3"
 	_ "github.com/dikkadev/aoc25/days/2"
 	_ "github.com/dikkadev/aoc25/days/3"
 	"github.com/dikkadev/prettyslog"
@@ -59,6 +57,16 @@ func main() {
 		slog.Error("Could not start CPU profile", "error", err)
 		return
 	}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		slog.Info("Caught interrupt, stopping CPU profile...")
+		pprof.StopCPUProfile()
+		f.Close()
+		os.Exit(0)
+	}()
 	defer pprof.StopCPUProfile()
 
 	day := days.Days[dayNumber]
