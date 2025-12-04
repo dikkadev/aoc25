@@ -1,5 +1,3 @@
-//go:build ignore
-
 package day
 
 import (
@@ -56,35 +54,29 @@ func ParseRange(inp string) IdRange {
 
 func IsNumberStupid(nInt int) bool {
 	n := fmt.Sprintf("%d", nInt)
-	if len(n)%2 != 0 {
-		return false
-	}
 	halfSize := len(n) / 2
 
-	// for length := startLength; length <= halfSize; length++ {
-
-	length := halfSize
-	if len(n)%length != 0 {
-		// continue
-		return false
-	}
-	subs := make([]string, 0)
-	for i := 0; i < len(n); i += length {
-		subs = append(subs, n[i:i+length])
-	}
-	slog.Debug("Checking substrings", "number", n, "length", length, "subs", subs)
-	allSame := true
-	firstSub := subs[0]
-	for _, sub := range subs[1:] {
-		if sub != firstSub {
-			allSame = false
-			break
+	for length := 1; length <= halfSize; length++ {
+		if len(n)%length != 0 {
+			continue
+		}
+		subs := make([]string, 0)
+		for i := 0; i < len(n); i += length {
+			subs = append(subs, n[i:i+length])
+		}
+		slog.Debug("Checking substrings", "number", n, "length", length, "subs", subs)
+		allSame := true
+		firstSub := subs[0]
+		for _, sub := range subs[1:] {
+			if sub != firstSub {
+				allSame = false
+				break
+			}
+		}
+		if allSame {
+			return true
 		}
 	}
-	if allSame {
-		return true
-	}
-	// }
 
 	return false
 }
