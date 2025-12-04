@@ -12,6 +12,34 @@ log() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
+add_import_to_main() {
+    local day="$1"
+    local import_line='_ "github.com/dikkadev/aoc25/days/'$day'"'
+    local main_file="main.go"
+    
+    # Check if main.go exists
+    if [[ ! -f "$main_file" ]]; then
+        log "ERROR: main.go file not found"
+        return 1
+    fi
+    
+    # Check if import already exists
+    if grep -q "$import_line" "$main_file"; then
+        log "Import already exists in main.go: $import_line"
+        return 0
+    fi
+    
+    # Add import after the existing days import
+    if sed -i '/github.com\/dikkadev\/aoc25\/days/a\
+\t'"$import_line" "$main_file"; then
+        log "Added import to main.go: $import_line"
+        return 0
+    else
+        log "ERROR: Failed to add import to main.go"
+        return 1
+    fi
+}
+
 usage() {
     echo "Usage: $0 [-gold] <day>"
     exit 1
@@ -32,8 +60,8 @@ DAY_DIR="days/$INPUT"
 INPUT_FILE="$DAY_DIR/$INPUT.go"
 GOLD_FILE="$DAY_DIR/${INPUT}_gold.go"
 INPUT_DIR="input"
-INPUT_INPUT_FILE="$INPUT_DIR/$INPUT.input"
-INPUT_SMALL_FILE="$INPUT_DIR/${INPUT}_small.input"
+INPUT_INPUT_FILE="$INPUT_DIR/$(printf "%02d" "$INPUT").input"
+INPUT_SMALL_FILE="$INPUT_DIR/$(printf "%02d" "$INPUT")_small.input"
 
 if $GOLD_MODE; then
     # Ensure the base script has already been run for the given input
@@ -77,6 +105,16 @@ if [[ -f "$TEMPLATE_FILE" ]]; then
     if [[ ! -f "$INPUT_FILE" ]]; then
         tail -n +2 "$TEMPLATE_FILE" > "$INPUT_FILE"
         log "Created file: $INPUT_FILE from template (without first line)"
+        
+        # Update the DAY constant to the actual day number
+        sed -i "s/const DAY = 0/const DAY = $INPUT/" "$INPUT_FILE"
+        log "Updated DAY constant to: $INPUT"
+        
+        # Add import to main.go
+        if ! add_import_to_main "$INPUT"; then
+            log "ERROR: Failed to add import to main.go"
+            exit 1
+        fi
     else
         log "File already exists: $INPUT_FILE"
     fi

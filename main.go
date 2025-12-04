@@ -9,29 +9,31 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/dikkadev/aoc25/days"
+	_ "github.com/dikkadev/aoc25/days/1"
 	"github.com/dikkadev/prettyslog"
-
-	
 )
 
 var (
 	small     bool
 	dayNumber uint
+	verbose   bool
 )
 
 func main() {
-	// handler := prettyslog.NewPrettyslogHandler("AOC", prettyslog.WithSource(true))
-	handler := prettyslog.NewPrettyslogHandler("AOC")
-	slog.SetDefault(slog.New(handler))
-
 	flag.BoolVar(&small, "s", false, "Use small input")
 	flag.UintVar(&dayNumber, "d", 0, "Day to run")
+	flag.BoolVar(&verbose, "v", false, "Enable debug level logging")
 	flag.Parse()
 
-	if small {
-		handler := prettyslog.NewPrettyslogHandler("AOC", prettyslog.WithLevel(slog.LevelDebug))
-		slog.SetDefault(slog.New(handler))
+	logLevel := slog.LevelInfo
+	if verbose {
+		logLevel = slog.LevelDebug
+	}
 
+	handler := prettyslog.NewPrettyslogHandler("AOC", prettyslog.WithLevel(logLevel))
+	slog.SetDefault(slog.New(handler))
+
+	if verbose {
 		for _, d := range days.Days {
 			if d != nil {
 				d.SetLogger(slog.New(handler))
