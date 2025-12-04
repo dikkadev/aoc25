@@ -9,9 +9,13 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/dikkadev/aoc25/days"
+	_ "github.com/dikkadev/aoc25/days/3"
 	_ "github.com/dikkadev/aoc25/days/2"
+	_ "github.com/dikkadev/aoc25/days/3"
 	_ "github.com/dikkadev/aoc25/days/1"
+	_ "github.com/dikkadev/aoc25/days/3"
 	_ "github.com/dikkadev/aoc25/days/2"
+	_ "github.com/dikkadev/aoc25/days/3"
 	"github.com/dikkadev/prettyslog"
 )
 
