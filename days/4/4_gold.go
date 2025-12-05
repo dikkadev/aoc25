@@ -1,5 +1,3 @@
-//go:build ignore
-
 package day
 
 import (
@@ -18,26 +16,43 @@ func init() {
 
 func Solve(input *input.Input, log *slog.Logger) int {
 	result := 0
-	inputMap := ParseMap(input)
-	processedMap := &Map{Width: inputMap.Width, Places: make([]Place, len(inputMap.Places))}
-	slog.Debug("Parsed map", "map", inputMap)
-	for i, p := range inputMap.Places {
-		processedMap.Places[i] = p
-		if p&Paper != 0 && inputMap.IsReachable(i) {
-			processedMap.Places[i] |= Reachable
-			result++
+	fromMap := ParseMap(input)
+	toMap := &Map{Width: fromMap.Width, Places: make([]Place, len(fromMap.Places))}
+	slog.Debug("Parsed map", "map", fromMap)
+	papersToRemove := true
+	for papersToRemove {
+		reachablePapers := 0
+		for i, p := range fromMap.Places {
+			toMap.Places[i] = p
+			if p&JustRemoved != 0 {
+				toMap.Places[i] = Empty
+			}
+			if p&Paper != 0 && fromMap.IsReachable(i) {
+				toMap.Places[i] &^= Paper
+				toMap.Places[i] |= JustRemoved
+				reachablePapers++
+			}
+		}
+		if reachablePapers == 0 {
+			papersToRemove = false
+		} else {
+			slog.Debug("Removed reachable papers", "count", reachablePapers, "map", toMap)
+			result += reachablePapers
+			// Swap maps
+			fromMap, toMap = toMap, fromMap
 		}
 	}
-	slog.Debug("Processed map", "map", processedMap)
+	slog.Debug("Final map", "map", fromMap)
 	return result
 }
 
 type Place uint64
 
 const (
-	Empty     Place = 0
-	Paper     Place = 1 << 0
-	Reachable Place = 1 << 63
+	Empty       Place = 0
+	JustRemoved Place = 1 << 62
+	Paper       Place = 1 << 0
+	Reachable   Place = 1 << 63
 )
 
 type Map struct {
@@ -88,7 +103,7 @@ func (m *Map) IsReachable(idx int) bool {
 	check(row+1, col-1)
 	check(row+1, col+1)
 
-	slog.Debug("Checking reachability", "index", idx, "row", row, "col", col, "paperNeighbors", count)
+	// slog.Debug("Checking reachability", "index", idx, "row", row, "col", col, "paperNeighbors", count)
 
 	return count < 4
 }
@@ -103,6 +118,8 @@ func (m *Map) String() string {
 		switch {
 		case p == Empty:
 			sb.WriteRune('.')
+		case p&JustRemoved != 0:
+			sb.WriteRune('R')
 		case p&Paper != 0 && p&Reachable != 0:
 			sb.WriteRune('x')
 		case p&Paper != 0:
@@ -113,29 +130,3 @@ func (m *Map) String() string {
 	}
 	return sb.String()
 }
-
-// func (m *Map) String() string {
-// 	var sb strings.Builder
-// 	sb.WriteRune('\n')
-// 	sb.WriteString("  0123456789\n")
-// 	sb.WriteString("0 ")
-// 	for i, p := range m.Places {
-// 		if i > 0 && i%m.Width == 0 {
-// 			sb.WriteRune('\n')
-// 			rowNum := i / m.Width
-// 			sb.WriteRune(rune('0' + rowNum))
-// 			sb.WriteRune(' ')
-// 		}
-// 		switch {
-// 		case p == Empty:
-// 			sb.WriteRune('.')
-// 		case p&Paper != 0 && p&Reachable != 0:
-// 			sb.WriteRune('x')
-// 		case p&Paper != 0:
-// 			sb.WriteRune('@')
-// 		default:
-// 			sb.WriteRune('?')
-// 		}
-// 	}
-// 	return sb.String()
-// }
