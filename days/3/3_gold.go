@@ -3,7 +3,6 @@ package day
 import (
 	"fmt"
 	"log/slog"
-	"sync"
 
 	"github.com/dikkadev/aoc25/days"
 	"github.com/dikkadev/aoc25/input"
@@ -27,29 +26,11 @@ func Solve(input *input.Input, log *slog.Logger) int {
 		// slog.Debug("Parsed bank", "bank", bank)
 	}
 
-	// for _, bank := range banks {
-	// 	maxPair := bank.MaxJoltagePair()
-	// 	result += int(maxPair)
-	// 	slog.Debug("Bank max joltage pair", "bank", bank, "max_pair", maxPair)
-	// }
-	// parallelize above
-
-	wg := sync.WaitGroup{}
-	mu := sync.Mutex{}
-
 	for _, bank := range banks {
-		wg.Add(1)
-		go func(bank Bank) {
-			defer wg.Done()
-			slog.Debug("Processing bank", "bank", bank)
-			maxPair := bank.MaxJoltagePair()
-			mu.Lock()
-			result += int(maxPair)
-			mu.Unlock()
-			slog.Debug("Bank max joltage pair", "bank", bank, "max_pair", maxPair)
-		}(bank)
+		maxPair := bank.MaxJoltagePair()
+		result += int(maxPair)
+		slog.Debug("Bank max joltage pair", "bank", bank, "max_pair", maxPair)
 	}
-	wg.Wait()
 
 	return result
 }
@@ -102,54 +83,37 @@ func ParseBank(inp string) Bank {
 }
 
 func (b *Bank) MaxJoltagePair() Joltage {
-	biggest := Joltage(-1)
-	//12 deep
-	for i := range len(b.Batteries) {
-		first := b.Batteries[i]
-		for second := i + 1; second < len(b.Batteries); second++ {
-			second := b.Batteries[second]
-			for third := second + 1; third < Joltage(len(b.Batteries)); third++ {
-				third := b.Batteries[third]
-				for fourth := third + 1; fourth < Joltage(len(b.Batteries)); fourth++ {
-					fourth := b.Batteries[fourth]
-					for fifth := fourth + 1; fifth < Joltage(len(b.Batteries)); fifth++ {
-						fifth := b.Batteries[fifth]
-						for sixth := fifth + 1; sixth < Joltage(len(b.Batteries)); sixth++ {
-							sixth := b.Batteries[sixth]
-							for seventh := sixth + 1; seventh < Joltage(len(b.Batteries)); seventh++ {
-								seventh := b.Batteries[seventh]
-								for eighth := seventh + 1; eighth < Joltage(len(b.Batteries)); eighth++ {
-									eighth := b.Batteries[eighth]
-									for ninth := eighth + 1; ninth < Joltage(len(b.Batteries)); ninth++ {
-										ninth := b.Batteries[ninth]
-										for tenth := ninth + 1; tenth < Joltage(len(b.Batteries)); tenth++ {
-											tenth := b.Batteries[tenth]
-											for eleventh := tenth + 1; eleventh < Joltage(len(b.Batteries)); eleventh++ {
-												eleventh := b.Batteries[eleventh]
-												for twelfth := eleventh + 1; twelfth < Joltage(len(b.Batteries)); twelfth++ {
-													twelfth := b.Batteries[twelfth]
-													// combined := CombineJoltages(first, CombineJoltages(second, CombineJoltages(third, CombineJoltages(fourth, CombineJoltages(fifth, CombineJoltages(sixth, CombineJoltages(seventh, CombineJoltages(eighth, CombineJoltages(ninth, CombineJoltages(tenth, CombineJoltages(eleventh, twelfth)))))))))))
-													combined := CombineNJoltages(first, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth)
-													// slog.Debug("Checking combination", "combination", combined)
-													if combined > biggest {
-														biggest = combined
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+	// Greedy approach: for each of the 12 positions, pick the largest digit
+	// available such that enough digits remain to fill the remaining positions.
+	//
+	// If we need to pick digit at position `pos` (0-11), and our current index
+	// in the array is `start`, we can pick any index from `start` to
+	// `n - (12 - pos - 1) - 1 = n - 12 + pos` (inclusive), because we need
+	// (12 - pos - 1) more digits after this one.
+
+	const toSelect = 12
+	n := len(b.Batteries)
+
+	selected := make([]Joltage, 0, toSelect)
+	start := 0
+
+	for pos := 0; pos < toSelect; pos++ {
+		remaining := toSelect - pos - 1 // digits we still need after this one
+		maxIdx := n - remaining - 1     // last valid index we can pick from
+
+		// Find the maximum digit in range [start, maxIdx]
+		bestIdx := start
+		bestVal := b.Batteries[start]
+		for i := start + 1; i <= maxIdx; i++ {
+			if b.Batteries[i] > bestVal {
+				bestVal = b.Batteries[i]
+				bestIdx = i
 			}
 		}
+
+		selected = append(selected, bestVal)
+		start = bestIdx + 1 // next digit must come after this one
 	}
 
-	// combined := CombineJoltages(first, second)
-	// if combined > biggest {
-	// 	biggest = combined
-	// }
-	return biggest
+	return CombineNJoltages(selected...)
 }
